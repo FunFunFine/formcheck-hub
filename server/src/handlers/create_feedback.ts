@@ -1,17 +1,33 @@
 
+import { db } from '../db';
+import { feedbackTable } from '../db/schema';
 import { type CreateFeedbackInput, type Feedback } from '../schema';
 
-export async function createFeedback(input: CreateFeedbackInput): Promise<Feedback> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is creating feedback on a post by a coach
-  // with a specified price in coins and persisting it in the database.
-  return Promise.resolve({
-    id: 0, // Placeholder ID
-    postId: input.postId,
-    coachId: input.coachId,
-    comment: input.comment,
-    priceCoins: input.priceCoins,
-    status: 'pending' as const,
-    createdAt: new Date()
-  } as Feedback);
-}
+export const createFeedback = async (input: CreateFeedbackInput): Promise<Feedback> => {
+  try {
+    // Insert feedback record
+    const result = await db.insert(feedbackTable)
+      .values({
+        postId: input.postId,
+        coachId: input.coachId,
+        comment: input.comment,
+        priceCoins: input.priceCoins
+      })
+      .returning()
+      .execute();
+
+    const feedback = result[0];
+    return {
+      id: feedback.id,
+      postId: feedback.postId,
+      coachId: feedback.coachId,
+      comment: feedback.comment,
+      priceCoins: feedback.priceCoins,
+      status: feedback.status,
+      createdAt: feedback.createdAt
+    };
+  } catch (error) {
+    console.error('Feedback creation failed:', error);
+    throw error;
+  }
+};

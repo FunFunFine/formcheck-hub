@@ -1,15 +1,30 @@
 
+import { db } from '../db';
+import { postsTable } from '../db/schema';
 import { type CreatePostInput, type Post } from '../schema';
 
-export async function createPost(input: CreatePostInput): Promise<Post> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is creating a new post by an athlete
-  // and persisting it in the database.
-  return Promise.resolve({
-    id: 0, // Placeholder ID
-    athleteId: input.athleteId,
-    videoUrl: input.videoUrl,
-    description: input.description,
-    createdAt: new Date()
-  } as Post);
-}
+export const createPost = async (input: CreatePostInput): Promise<Post> => {
+  try {
+    // Insert post record
+    const result = await db.insert(postsTable)
+      .values({
+        athleteId: input.athleteId,
+        videoUrl: input.videoUrl,
+        description: input.description
+      })
+      .returning()
+      .execute();
+
+    const post = result[0];
+    return {
+      id: post.id,
+      athleteId: post.athleteId,
+      videoUrl: post.videoUrl,
+      description: post.description,
+      createdAt: post.createdAt
+    };
+  } catch (error) {
+    console.error('Post creation failed:', error);
+    throw error;
+  }
+};
